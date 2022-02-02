@@ -1,6 +1,5 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
-using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
