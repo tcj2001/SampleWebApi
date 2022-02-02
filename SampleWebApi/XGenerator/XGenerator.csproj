@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="T4Generate_UOW_RP_SERVICE_CONTROLLER.tt">
+      <LastGenOutput>T4Generate_UOW_RP_SERVICE_CONTROLLER.txt</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="T4Generate_UOW_RP_SERVICE_CONTROLLER.txt">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>T4Generate_UOW_RP_SERVICE_CONTROLLER.tt</DependentUpon>
+    </None>
+    <None Update="T4Helper.ttinclude">
+      <LastGenOutput>T4Helper.cs</LastGenOutput>
+      <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="T4Helper.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>T4Helper.ttinclude</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,523 @@
+﻿<#@ template language="C#" debug="true" hostspecific="true" #>
+<#@ output extension=".txt" #>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data.Entity" #>
+<#@ assembly name="EnvDTE" #>
+<#@ import namespace="EnvDTE" #>
+<#@ include file="T4Helper.ttinclude" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.Collections" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Reflection" #>
+<#  //Set these options
+    string EntityNamespace = "Core.Entities";
+    string DbContextNamespace = "Infrastructure.Context";
+    string efContext = "ApplicationDbContext"; //If Context is not in the same namespace rename this to the name of the context
+
+    IServiceProvider serviceProvider = (IServiceProvider)this.Host;
+    DTE dte = serviceProvider.GetService(typeof(DTE)) as DTE; 
+    var project1 = FindProjectByName(dte, "Core");
+    var classes = FindClasses(project1, EntityNamespace, "");
+    var classNames = classes
+                    .Select(currentClass => currentClass.Name)
+                    .ToList();
+    var project2 = FindProjectByName(dte, "Infrastructure");
+    var dbcclass = FindClasses(project2, DbContextNamespace, "");
+    var classWithDbContext = dbcclass.FirstOrDefault(currentClass => currentClass.Bases.OfType<CodeElement>().Any(currentBase => currentBase.Name == "DbContext"));
+    if(classWithDbContext != null)
+    {
+        efContext = classWithDbContext.Name;
+    }
+#>
+/////////////////////////////////////
+// generated Helper in Application //
+/////////////////////////////////////
+using Application.Interfaces;
+using Application.Services;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Application
+{
+    public static class Helper
+    {
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+        <#foreach(string className in classNames)
+           {
+            var properClassName = GetProperClassName(className);
+            var serviceName = properClassName + "Service";
+        #>
+    services.AddScoped<I<#= serviceName #>, <#= serviceName #>>();
+        <#}#>
+    return services;
+        }
+    }
+}
+<# CreateFile("Application", "", "Helper.cs"); #>
+/////////////////////////////////////////
+// generated Helper in Infracstructure //
+/////////////////////////////////////////
+using Core.Interfaces;
+using Infrastructure.Context;
+using Infrastructure.Interfaces;
+using Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Infrastructure
+{
+    public static class Helper
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+        {
+            //services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Name=SqliteDb"));
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("Name=SqlServerDb"));
+            services.AddScoped<IUnitOfWork, UnitOfWork<ApplicationDbContext>>();
+        <#foreach(string className in classNames)
+           {
+            var properClassName = GetProperClassName(className);
+            var repositoryName = properClassName + "Repository";
+        #>
+    services.AddScoped<I<#= repositoryName #>, <#= repositoryName #>>();
+        <#}#>
+    return services;
+        }
+    }
+}
+<# CreateFile("Infrastructure", "", "Helper.cs"); #>
+/////////////////////////////////////////////////////
+// generated IGenericRepository in Core/Interfaces //
+/////////////////////////////////////////////////////
+using System.Linq.Expressions;
+
+namespace Core.Interfaces
+{
+    public interface IGenericRepository<T> where T : class
+    {
+        ValueTask<T?> GetById(int id);
+        ValueTask<T?> GetById(string id);
+        Task<IEnumerable<T>> GetAll();
+        Task<IEnumerable<T>> Find(Expression<Func<T, bool>> expression);
+        Task Add(T entity);
+        void Remove(T entitiy);
+        void Update(T entitiy);
+
+    }
+}
+<# CreateFile("Core", "Interfaces", "IGenericRepository.cs"); #>
+/////////////////////////////////////////////////////////////////
+// generated GenericRepository in Infracstructure/Repositories //
+/////////////////////////////////////////////////////////////////
+using Core.Interfaces;
+using Infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace Infrastructure.Repositories
+{
+    public class GenericRepository<T> : IGenericRepository<T> where T : class
+    {
+        public ApplicationDbContext _context;
+
+        public GenericRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public virtual async ValueTask<T?> GetById(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public virtual async ValueTask<T?> GetById(string id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public virtual async Task<IEnumerable<T>> GetAll()
+        {
+            return await _context.Set<T>().ToListAsync();
+        }
+        public virtual async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> expression)
+        {
+            return await _context.Set<T>().Where(expression).ToListAsync();
+        }
+        public virtual async Task Add(T entity)
+        {
+            await _context.Set<T>().AddAsync(entity);
+        }
+        public virtual void Remove(T entity)
+        {
+            _context.Set<T>().Remove(entity);
+
+        }
+        public virtual void Update(T entity)
+        {
+            _context.Set<T>().Update(entity);
+        }
+    }
+}
+<# CreateFile("Infrastructure", "Repositories", "GenericRepository.cs"); #>
+////////////////////////////////////////////////////////
+// generated IUnitOfWork in Infrastructure/Interfaces //
+////////////////////////////////////////////////////////
+using Core.Interfaces;
+
+
+namespace Infrastructure.Interfaces
+{
+    public interface IUnitOfWork
+    {
+        Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+        Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+        Task<int> CompleteAsync(CancellationToken cancellationToken = default);
+    }
+}
+<# CreateFile("Infrastructure", "Interfaces", "IUnitofWork.cs"); #>
+////////////////////////////////////////////////////////
+// generated UnitOfWork in Infrastructure/Repository //
+////////////////////////////////////////////////////////
+using Infrastructure.Context;
+using Infrastructure.Interfaces;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
+
+
+namespace Infrastructure.Repositories
+{
+    public class UnitOfWork<TContext> : IUnitOfWork where TContext : ApplicationDbContext
+    {
+        private readonly TContext _context;
+
+        private IDbContextTransaction _transaction;
+
+        public UnitOfWork(TContext context)
+        {
+            _context = context;
+        }
+
+        public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        }
+
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            await _transaction.CommitAsync(cancellationToken);
+        }
+
+        public async Task<int> CompleteAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            _transaction?.Dispose();
+
+            _context.Dispose();
+        }
+    }
+}
+<# CreateFile("Infrastructure", "Repositories", "UnitofWork.cs"); #>
+<#foreach(string className in classNames)
+{
+    var properClassName = GetProperClassName(className);
+    var repositoryName =  properClassName + "Repository";
+    (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
+#>
+////////////////////////////////////////////////////////////////////
+// generated I<#= repositoryName #> where Entity is the className //
+////////////////////////////////////////////////////////////////////
+using Core.Entities;
+
+namespace Core.Interfaces
+{
+    public interface I<#= repositoryName #> : IGenericRepository<<#= properClassName #>>
+    {
+        //Task<IEnumerable<<#= properClassName #>>> Get<#= properClassName #>ByName(string name);
+    }
+}
+<# CreateFile("Core", "Interfaces", "I"+repositoryName+".cs"); #>
+<#
+}
+#>
+<#foreach(string className in classNames)
+{
+    var properClassName = GetProperClassName(className);
+    var repositoryName =  properClassName + "Repository";
+    (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
+#>
+///////////////////////////////////////////////////////////////
+// generated <#= repositoryName #> where Entity is the class //
+///////////////////////////////////////////////////////////////
+using Core.Entities;
+using Core.Interfaces;
+using Infrastructure.Context;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infrastructure.Repositories
+{
+    public class <#= properClassName #>Repository : GenericRepository<<#= properClassName #>>, I<#= properClassName #>Repository
+    {
+        public <#= properClassName #>Repository(ApplicationDbContext context) : base(context)
+        {
+            _context = context;
+        }
+        //public async Task<IEnumerable<<#= properClassName #>>> Get<#= properClassName #>ByName(string name)
+        //{
+        //    return await _context.Set<<#= properClassName #>>().Where(x => x.Name == name).ToListAsync();
+        //}
+    }
+}
+<# CreateFile("Infrastructure", "Repositories", repositoryName+".cs"); #>
+<#
+}
+#>
+<#foreach(string className in classNames)
+{
+    var properClassName = GetProperClassName(className);
+    var serviceName =  properClassName + "Service";
+    (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
+#>
+/////////////////////////////////////////////////////////////
+// generated I<#= serviceName #> where Entity is the class //
+/////////////////////////////////////////////////////////////
+using Core.Entities;
+using System.Linq.Expressions;
+
+namespace Application.Interfaces
+{
+    public interface I<#= properClassName #>Service
+    {
+        Task<(bool IsSuccess, string? Message)> Add<#= properClassName #>(<#= properClassName #> entity);
+        Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression);
+        Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> GetAll<#= properClassName #>();
+        Task<(bool IsSuccess, <#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> id);
+        Task<(bool IsSuccess, string Message)> Remove<#= properClassName #>(<#= key1Type #> id);
+        Task<(bool IsSuccess, string Message)> Update<#= properClassName #>(<#= properClassName #> entity);
+    }
+}
+<# CreateFile("Application", "Interfaces", "I"+serviceName+".cs"); #>
+<#
+}
+#>
+<#foreach(string className in classNames)
+{
+    var properClassName = GetProperClassName(className);
+    var serviceName =  properClassName + "Service";
+    var repositoryName =  properClassName + "Repository";
+    (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
+#>
+////////////////////////////////////////////////////////////
+// generated <#= serviceName #> where Entity is the class //
+////////////////////////////////////////////////////////////
+using Application.Interfaces;
+using Core.Interfaces;
+using Core.Entities;
+using System.Linq.Expressions;
+
+namespace Application.Services
+{
+    public class <#= properClassName #>Service : I<#= properClassName #>Service
+    {
+        private readonly I<#= repositoryName #> _<#= repositoryName #>;
+        public <#= properClassName #>Service(I<#= repositoryName #> <#= repositoryName #>)
+        {
+            _<#= repositoryName #> = <#= repositoryName #>;
+        }
+        public async Task<(bool IsSuccess, string? Message)> Add<#= properClassName #>(<#= properClassName #> entity)
+        {
+            if (entity != null)
+            {
+                var item = await _<#= repositoryName #>.GetById(entity.<#= key1 #>);
+                if (item != null)
+                {
+                    return (false, "<#= properClassName #> record already exists");
+                }
+                else
+                {
+                    await _<#= repositoryName #>.Add(entity);
+                    return (true, "<#= properClassName #> record added");
+                }
+            }
+            return (false, "Add Error");
+        }
+
+        public async Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression)
+        {
+            var items = await _<#= repositoryName #>.Find(expression);
+            return (true, items, "<#= properClassName #> records retrieved");
+        }
+
+        public async Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> GetAll<#= properClassName #>()
+        {
+            var items = await _<#= repositoryName #>.GetAll();
+            return (true, items, "<#= properClassName #> records retrieved");
+        }
+
+        public async Task<(bool IsSuccess, <#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> id)
+        {
+            var item = await _<#= repositoryName #>.GetById(id);
+            if (item == null)
+            {
+                return (false, null, "<#= properClassName #> record does not exists");
+            }
+            return (true, item, "<#= properClassName #> record retrieved");
+        }
+
+        public async Task<(bool IsSuccess, string Message)> Remove<#= properClassName #>(<#= key1Type #> id)
+        {
+            var item = await _<#= repositoryName #>.GetById(id);
+            if (item == null)
+            {
+                return (false, "<#= properClassName #> record does not exists");
+            }
+            else
+            {
+                _<#= repositoryName #>.Remove(item);
+                return (true, "<#= properClassName #> record deleted");
+            }
+        }
+
+        public async Task<(bool IsSuccess, string Message)> Update<#= properClassName #>(<#= properClassName #> entity)
+        {
+            if (entity != null)
+            {
+                var item = await _<#= repositoryName #>.GetById(entity.<#= key1 #>);
+                if (item == null)
+                {
+                    return (false, "<#= properClassName #> record does not exists");
+                }
+                else
+                {
+                    //use mapper to map each properites
+                    //item.Name = entity.Name;
+                    //item.Description = entity.Description;
+
+                    _<#= repositoryName #>.Update(item);
+                    return (true, "<#= properClassName #> record updated");
+                }
+            }
+            return (false, "Update Error");
+        }
+    }
+}
+<# CreateFile("Application", "Services", serviceName+".cs"); #>
+<#
+}
+#>
+<#foreach(string className in classNames)
+{
+    var properClassName = GetProperClassName(className);
+    var controller =  properClassName + "Controller";
+    (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
+#>
+////////////////////////////////////////////////////////////
+// generated <#= controller #> where Entity is the class //
+////////////////////////////////////////////////////////////
+using Application.Interfaces;
+using Core.Interfaces;
+using Core.Entities;
+using Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Mvc;
+
+// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
+namespace Webapi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class <#= properClassName #>Controller : ControllerBase
+    {
+        private readonly I<#= properClassName #>Service _<#= properClassName #>Server;
+        private readonly IUnitOfWork unitOfWork;
+
+        public <#= properClassName #>Controller(I<#= properClassName #>Service <#= properClassName #>Server, IUnitOfWork unitOfWork)
+        {
+            this._<#= properClassName #>Server = <#= properClassName #>Server;
+            this.unitOfWork = unitOfWork;
+        }
+        // GET: api/<<#= properClassName #>Controller>
+        [HttpGet]
+        public async Task<IActionResult> Get()
+        {
+            var result = await _<#= properClassName #>Server.GetAll<#= properClassName #>();
+            if (result.IsSuccess)
+            {
+                return Ok(result.entities);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+
+        // GET api/<<#= properClassName #>Controller>/5
+        [HttpGet("{id}")]
+        public async Task<IActionResult> Get(<#= key1Type #> id)
+        {
+            var result = await _<#= properClassName #>Server.Get<#= properClassName #>ById(id);
+            if (result.IsSuccess)
+            {
+                return Ok(result.entity);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+
+        // POST api/<<#= properClassName #>Controller>
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] <#= properClassName #> entity)
+        {
+            var result = await _<#= properClassName #>Server.Add<#= properClassName #>(entity);
+            if (result.IsSuccess)
+            {
+                await unitOfWork.CompleteAsync();
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+
+        // PUT api/<<#= properClassName #>Controller>/5
+        [HttpPut()]
+        public async Task<IActionResult> Put([FromBody] <#= properClassName #> entity)
+        {
+            var result = await _<#= properClassName #>Server.Update<#= properClassName #>(entity);
+            if (result.IsSuccess)
+            {
+                await unitOfWork.CompleteAsync();
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+
+        // DELETE api/<<#= properClassName #>Controller>/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(<#= key1Type #> id)
+        {
+            var result = await _<#= properClassName #>Server.Remove<#= properClassName #>(id);
+            if (result.IsSuccess)
+            {
+                await unitOfWork.CompleteAsync();
+                return Ok(result.Message);
+            }
+            else
+            {
+                return BadRequest(result.Message);
+            }
+        }
+    }
+}
+<# CreateFile("Webapi", "Controllers", controller+".cs"); #>
+<#
+}
+#>

@@ -1,0 +1,86 @@
+//install entity frame work
+dotnet tool install --global dotnet-ef
+
+MKDIR SolutionFolder
+CD SolutionFolder
+//this create a solution with the current director name
+dotnet new solution
+
+//to create a startup project if webapi or mvc not used
+dotnet new worker -n Startup
+
+//to create class library
+dotnet new classlib -o Core
+dotnet new classlib -o Application
+dotnet new classlib -o Infrastructure
+dotnet new classlib -o Web
+
+//add solution file
+dotnet sln add Webapi/Webapi.csproj Core/Core.csproj Application/Application.csproj  Infrastructure/Infrastructure.csproj
+
+//add project dependency
+dotnet add Application/Application.csproj reference Core/Core.csproj
+dotnet add Infrastructute/Infrastructute.csproj reference Application/Application.csproj
+dotnet add Webapi/Webapi.csproj reference Infrastructute/Infrastructute.csproj reference Application/Application.csproj
+//add package dependencies
+dotnet add Application/.Application.csproj package microsoft.extensions.dependencyinjection.abstractions
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.design
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.sqlite
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.sqlserver
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.tools
+dotnet add Infrastructute/Infrastructute.csproj package microsoft.extensions.dependencyinjection
+
+dotnet add Startup/Startup.csproj package microsoft.entityframeworkcore.design
+dotnet add Startup/Startup.csproj package swashbuckle.aspnetcore
+
+//Add a connection string in appsettings.json
+  "ConnectionStrings":{
+    "SqlLite":"DataSource=app.db;Cache=Shared",
+    "SqlServer": "Server=DESKTOP-GBANT4V; Database=PocketBook; Trusted_Connection=True;"
+  },
+
+//register ApplicationDbContext framework in program.cs
+services.AddDbContext<ApplicationDbContext>(options=>options.UseSqlite("Name=SqlLite"));	
+or
+services.AddDbContext<ApplicationDbContext>(options=>options.UseSqlServer("Name=SqlServer"));
+
+//migration for database first approach
+//run from solution folder
+scaffold-DbContext -Connection Name=SqlServerDB -Provider Microsoft.EntityFrameworkCore.SqlServer -OutputDir ..\Core\Entities  -Context ApplicationDbContext -ContextDir ..\Infrastructure\Context -DataAnnotations -Force
+
+//migration for code first approach
+//run from solution folder
+builder.Services.AddInfrastructure();
+builder.Services.AddApplication();
+dotnet ef migrations add InitialMigartion --project Infrastructure  --startup-project Webapi
+dotnet ef database update --project Infrastructure  --startup-project Webapi
+
+//remove migration
+dotnet ef migrations remove
+//list migrations
+dotnet ef migrations list
+
+//to seed data
+dotnet ef migrations add SeedDepartmentTable  --project 'Data.SqlServer'  --startup-project 'Startup'
+//SeedDepartmentTable is class derived from Migration
+using Microsoft.EntityFrameworkCore.Migrations;
+namespace MyMusic.Data.Migrations
+{
+    public partial class SeedDepartmentTable : Migration
+    {
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder
+                .Sql("INSERT INTO Department (Name,Code) Values ('Department one', 'd1')");
+            migrationBuilder
+                .Sql("INSERT INTO Department (Name,Code) Values ('Department two', 'd2')");
+        }
+        
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder
+                .Sql("DELETE FROM Department");
+        }
+    }
+}
