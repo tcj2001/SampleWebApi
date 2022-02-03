@@ -1,4 +1,7 @@
-﻿namespace Domain.Exceptions
+//////////////////////////////////////////
+// generated EntityKeyFoundException.cs //
+//////////////////////////////////////////
+namespace Domain.Exceptions
 {
     public sealed class EntityKeyFoundException : BadRequestException
     {

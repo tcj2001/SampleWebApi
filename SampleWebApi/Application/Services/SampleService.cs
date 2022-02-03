@@ -1,9 +1,11 @@
-﻿using Application.Interfaces;
+/////////////////////////////////////
+// generated SampleService.cs //
+/////////////////////////////////////
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Exceptions;
 using Domain.Interfaces;
 using System.Linq.Expressions;
-
 
 namespace Application.Services
 {
@@ -15,7 +17,6 @@ namespace Application.Services
         {
             _repositoryManager = repositoryManager;
         }
-
         public async Task<(IEnumerable<Sample> entities, string Message)> FindSample(Expression<Func<Sample, bool>> expression, CancellationToken cancellationToken = default)
         {
             var items = await _repositoryManager.SampleRepository.Find(expression);
@@ -84,8 +85,8 @@ namespace Application.Services
                 else
                 {
                     //only place that need change if structure changes
-                    item.Name = entity.Name;
-                    item.Description = entity.Description;
+                    //item.Name = entity.Name;
+                    //item.Description = entity.Description;
 
                     _repositoryManager.SampleRepository.Update(item);
                     await _repositoryManager.UnitOfWork.CompleteAsync(cancellationToken);

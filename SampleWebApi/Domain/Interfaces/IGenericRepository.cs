@@ -1,4 +1,7 @@
-﻿using System.Linq.Expressions;
+/////////////////////////////////////
+// generated IGenericRepository.cs //
+/////////////////////////////////////
+using System.Linq.Expressions;
 
 namespace Domain.Interfaces
 {

@@ -1,4 +1,7 @@
-﻿using Domain.Interfaces;
+/////////////////////////////
+// generated UnitOfWork.cs //
+/////////////////////////////
+using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore.Storage;
 

@@ -1,4 +1,7 @@
-﻿using Application.Interfaces;
+//////////////////////////////////////////
+// generated AddApplicationExtension.cs //
+//////////////////////////////////////////
+using Application.Interfaces;
 using Application.Services;
 
 namespace Webapi.Extensions

@@ -1,3 +1,6 @@
+//////////////////////////
+// generated Program.cs //
+//////////////////////////
 using Serilog;
 
 namespace Webapi
@@ -15,12 +18,6 @@ namespace Webapi
                 //installed in application project,
                 //this project has reference to application project
                 .UseSerilog()
-                //this uses package Serilog.Extensions.Logging.File, its instaaled on the application project
-                //allows to log error to a json file in the log folder of the startup project
-                //.ConfigureLogging((_, builder) =>
-                //{
-                //    builder.AddFile("logs/app-{Date}.json", isJson: true);
-                //})
 
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

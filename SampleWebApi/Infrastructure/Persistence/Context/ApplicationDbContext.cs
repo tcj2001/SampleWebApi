@@ -1,4 +1,7 @@
-﻿using Domain.Entities;
+///////////////////////////////////////
+// generated ApplicationDbContext.cs //
+///////////////////////////////////////
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence.Context

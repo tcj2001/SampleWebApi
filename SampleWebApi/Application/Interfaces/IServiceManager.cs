@@ -1,4 +1,7 @@
-﻿namespace Application.Interfaces
+//////////////////////////////////
+// generated IServiceManager.cs //
+//////////////////////////////////
+namespace Application.Interfaces
 {
     public interface IServiceManager
     {

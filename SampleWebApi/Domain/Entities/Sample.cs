@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-
+﻿
+/////////////////////////
+// generated Sample.cs //
+/////////////////////////
+using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities
 {

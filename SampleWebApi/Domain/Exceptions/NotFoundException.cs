@@ -1,4 +1,7 @@
-﻿namespace Domain.Exceptions
+////////////////////////////////////
+// generated NotFoundException.cs //
+////////////////////////////////////
+namespace Domain.Exceptions
 {
     public abstract class NotFoundException : Exception
     {

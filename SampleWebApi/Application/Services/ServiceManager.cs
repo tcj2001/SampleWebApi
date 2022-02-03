@@ -1,4 +1,7 @@
-﻿using Application.Interfaces;
+/////////////////////////////////
+// generated ServiceManager.cs //
+/////////////////////////////////
+using Application.Interfaces;
 using Domain.Interfaces;
 
 namespace Application.Services

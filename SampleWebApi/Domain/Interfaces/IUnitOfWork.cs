@@ -1,4 +1,7 @@
-﻿namespace Domain.Interfaces
+//////////////////////////////
+// generated IUnitOfWork.cs //
+//////////////////////////////
+namespace Domain.Interfaces
 {
     public interface IUnitOfWork
     {

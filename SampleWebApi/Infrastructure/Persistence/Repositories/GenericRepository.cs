@@ -1,4 +1,7 @@
-﻿using Domain.Interfaces;
+////////////////////////////////////
+// generated GenericRepository.cs //
+////////////////////////////////////
+using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

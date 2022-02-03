@@ -12,13 +12,14 @@
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Reflection" #>
 <#  //Set these options
-    string EntityNamespace = "Core.Entities";
-    string DbContextNamespace = "Infrastructure.Context";
+    string StartupProject = "Webapi";
+    string EntityNamespace = "Domain.Entities";
+    string DbContextNamespace = "Infrastructure.Persistence.Context";
     string efContext = "ApplicationDbContext"; //If Context is not in the same namespace rename this to the name of the context
 
     IServiceProvider serviceProvider = (IServiceProvider)this.Host;
     DTE dte = serviceProvider.GetService(typeof(DTE)) as DTE; 
-    var project1 = FindProjectByName(dte, "Core");
+    var project1 = FindProjectByName(dte, "Domain");
     var classes = FindClasses(project1, EntityNamespace, "");
     var classNames = classes
                     .Select(currentClass => currentClass.Name)
@@ -31,15 +32,468 @@
         efContext = classWithDbContext.Name;
     }
 #>
-<#foreach(string className in classNames)
+/////////////////////////
+// generated Sample.cs //
+/////////////////////////
+using System.ComponentModel.DataAnnotations;
+
+namespace Domain.Entities
+{
+    public class Sample
+    {
+        [Key]
+        public int Id { get; set; }
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+    }
+}
+<# CreateFile("Domain", "Entities","Sample.cs"); #>
+///////////////////////////////////////
+// generated ApplicationDbContext.cs //
+///////////////////////////////////////
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infrastructure.Persistence.Context
+{
+    public class ApplicationDbContext : DbContext
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        {
+
+        }
+        public DbSet<Sample> Samples { get; set; }
+    }
+}
+<# CreateFile("Infrastructure", "Persistence/Context","ApplicationDbContext.cs"); #>
+/////////////////////////////////////
+// generated IGenericRepository.cs //
+/////////////////////////////////////
+using System.Linq.Expressions;
+
+namespace Domain.Interfaces
+{
+    public interface IGenericRepository<T> where T : class
+    {
+        ValueTask<T?> GetById(int id);
+        ValueTask<T?> GetById(string id);
+        Task<IEnumerable<T>> GetAll();
+        Task<IEnumerable<T>> Find(Expression<Func<T, bool>> expression);
+        Task Add(T entity);
+        void Remove(T entitiy);
+        void Update(T entitiy);
+
+    }
+}
+<# CreateFile("Domain", "Interfaces","IGenericRepository.cs"); #>
+////////////////////////////////////
+// generated GenericRepository.cs //
+////////////////////////////////////
+using Domain.Interfaces;
+using Infrastructure.Persistence.Context;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
+
+namespace Infrastructure.Persistence.Repositories
+{
+    public class GenericRepository<T> : IGenericRepository<T> where T : class
+    {
+        //replace DbContex with ApplicationDbContext
+        public ApplicationDbContext _context;
+
+        public GenericRepository(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public virtual async ValueTask<T?> GetById(int id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public virtual async ValueTask<T?> GetById(string id)
+        {
+            return await _context.Set<T>().FindAsync(id);
+        }
+        public virtual async Task<IEnumerable<T>> GetAll()
+        {
+            return await _context.Set<T>().ToListAsync();
+        }
+        public virtual async Task<IEnumerable<T>> Find(Expression<Func<T, bool>> expression)
+        {
+            return await _context.Set<T>().Where(expression).ToListAsync();
+        }
+        public virtual async Task Add(T entity)
+        {
+            await _context.Set<T>().AddAsync(entity);
+        }
+        public virtual void Remove(T entity)
+        {
+            _context.Set<T>().Remove(entity);
+
+        }
+        public virtual void Update(T entity)
+        {
+            _context.Set<T>().Update(entity);
+        }
+    }
+}
+<# CreateFile("Infrastructure", "Persistence/Repositories","GenericRepository.cs"); #>
+//////////////////////////////
+// generated IUnitOfWork.cs //
+//////////////////////////////
+namespace Domain.Interfaces
+{
+    public interface IUnitOfWork
+    {
+        Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+        Task CommitTransactionAsync(CancellationToken cancellationToken = default);
+        Task<int> CompleteAsync(CancellationToken cancellationToken = default);
+    }
+}
+<# CreateFile("Domain", "Interfaces","IUnitOfWork.cs"); #>
+/////////////////////////////
+// generated UnitOfWork.cs //
+/////////////////////////////
+using Domain.Interfaces;
+using Infrastructure.Persistence.Context;
+using Microsoft.EntityFrameworkCore.Storage;
+
+
+namespace Infrastructure.Persistence.Repositories
+{
+    public class UnitOfWork : IUnitOfWork
+    {
+        private readonly ApplicationDbContext _context;
+
+        private IDbContextTransaction _transaction;
+
+        public UnitOfWork(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            _transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        }
+
+        public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
+        {
+            await _transaction.CommitAsync(cancellationToken);
+        }
+
+        public async Task<int> CompleteAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public void Dispose()
+        {
+            _transaction?.Dispose();
+
+            _context.Dispose();
+        }
+    }
+}
+<# CreateFile("Infrastructure", "Persistence/Repositories","UnitOfWork.cs"); #>
+//////////////////////////////////////
+// generated BadRequestException.cs //
+//////////////////////////////////////
+namespace Domain.Exceptions
+{
+    public abstract class BadRequestException : Exception
+    {
+        protected BadRequestException(string message) : base(message)
+        {
+        }
+    }
+}
+<# CreateFile("Domain", "Exceptions","BadRequestException.cs"); #>
+////////////////////////////////////
+// generated NotFoundException.cs //
+////////////////////////////////////
+namespace Domain.Exceptions
+{
+    public abstract class NotFoundException : Exception
+    {
+        protected NotFoundException(string message) : base(message)
+        {
+        }
+    }
+}
+<# CreateFile("Domain", "Exceptions","NotFoundException.cs"); #>
+//////////////////////////////////////////
+// generated EntityKeyFoundException.cs //
+//////////////////////////////////////////
+namespace Domain.Exceptions
+{
+    public sealed class EntityKeyFoundException : BadRequestException
+    {
+        public EntityKeyFoundException(string entity, string id)
+            : base(String.Format("Entity {0} with the identifier {1} exist.", entity, id))
+        {
+        }
+    }
+}
+<# CreateFile("Domain", "Exceptions","EntityKeyFoundException.cs"); #>
+/////////////////////////////////////////////
+// generated EntityKeyNotFoundException.cs //
+/////////////////////////////////////////////
+namespace Domain.Exceptions
+{
+    public sealed class EntityKeyNotFoundException : NotFoundException
+    {
+        public EntityKeyNotFoundException(string entity, string id)
+            : base(String.Format("Entity {0} with the identifier {1} was not found.", entity, id))
+        {
+        }
+    }
+}
+<# CreateFile("Domain", "Exceptions","EntityKeyNotFoundException.cs"); #>
+////////////////////////////////////
+// generated AssemblyReference.cs //
+////////////////////////////////////
+namespace Infrastructure.Presentation
+{
+    public static class AssemblyReference
+    {
+    }
+}
+<# CreateFile("Infrastructure", "Presentation","AssemblyReference.cs"); #>
+//////////////////////////////////////////
+// generated AddApplicationExtension.cs //
+//////////////////////////////////////////
+using Application.Interfaces;
+using Application.Services;
+
+namespace <#= StartupProject #>.Extensions
+{
+    public static class AddApplicationExtension
+    {
+        public static IServiceCollection AddApplication(this IServiceCollection services)
+        {
+            services.AddScoped<IServiceManager, ServiceManager>();
+            return services;
+        }
+    }
+}
+<# CreateFile(StartupProject, "Extensions","AddApplicationExtension.cs"); #>
+//////////////////////////////////////////
+// generated AddPersistenceExtension.cs //
+//////////////////////////////////////////
+using Domain.Interfaces;
+using Infrastructure.Persistence.Context;
+using Infrastructure.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
+
+namespace <#= StartupProject #>.Extensions
+{
+    public static class AddPersistenceExtension
+    {
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Name=SqliteDb"));
+            //services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer("Name=SqlServerDb"));
+            services.AddScoped<IRepositoryManager, RepositoryManager>();
+            return services;
+        }
+    }
+}
+<# CreateFile(StartupProject, "Extensions","AddPersistenceExtension.cs"); #>
+//////////////////////////////////////////////
+// generated ExceptionHandlingMiddleware.cs //
+//////////////////////////////////////////////
+using Domain.Exceptions;
+using System.Text.Json;
+
+namespace <#= StartupProject #>.Middleware
+{
+    internal sealed class ExceptionHandlingMiddleware : IMiddleware
+    {
+        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+
+        public ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> logger) => _logger = logger;
+
+        public async Task InvokeAsync(HttpContext context, RequestDelegate next)
+        {
+            try
+            {
+                await next(context);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, e.Message);
+
+                await HandleExceptionAsync(context, e);
+            }
+        }
+
+        private static async Task HandleExceptionAsync(HttpContext httpContext, Exception exception)
+        {
+            httpContext.Response.ContentType = "application/json";
+
+            httpContext.Response.StatusCode = exception switch
+            {
+                BadRequestException => StatusCodes.Status400BadRequest,
+                NotFoundException => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status500InternalServerError
+            };
+
+            var response = new
+            {
+                error = exception.Message
+            };
+
+            await httpContext.Response.WriteAsync(JsonSerializer.Serialize(response));
+        }
+    }
+}
+<# CreateFile(StartupProject, "Middleware","ExceptionHandlingMiddleware.cs"); #>
+//////////////////////////
+// generated Program.cs //
+//////////////////////////
+using Serilog;
+
+namespace <#= StartupProject #>
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                //this is needed for Serilog.AspNetCore, Serilog.Settings.Configuration, Serilog.Sinks.File, Serilog.Sinks.Console, Serilog.Expressions
+                //installed in application project,
+                //this project has reference to application project
+                .UseSerilog()
+
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder.UseStartup<Startup>();
+                });
+    }
+}
+<# CreateFile(StartupProject, "","Program.cs"); #>
+//////////////////////////
+// generated Startup.cs //
+//////////////////////////
+using Microsoft.OpenApi.Models;
+using Serilog;
+using <#= StartupProject #>.Extensions;
+using <#= StartupProject #>.Middleware;
+
+namespace <#= StartupProject #>
+{
+    public class Startup
+    {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+            //this is needed for Serilog.AspNetCore, Serilog.Settings.Configuration, Serilog.Sinks.File, Serilog.Sinks.Console,Serilog.Expressions
+            //installed in application project,
+            //this project has reference to application project
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .CreateLogger();
+        }
+
+        public IConfiguration Configuration { get; }
+
+        // This method gets called by the runtime. Use this method to add services to the container.
+        public void ConfigureServices(IServiceCollection services)
+        {
+            // this has AddApplicationPart so that the controllers are referenced from Infrastructure.Presentation instead of <#= StartupProject #>
+            services.AddControllers().AddApplicationPart(typeof(Infrastructure.Presentation.AssemblyReference).Assembly);
+
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "<#= StartupProject #>", Version = "v1" });
+            });
+
+            // added these for this project
+            services.AddInfrastructure();
+            services.AddApplication();
+            //this is need for exception handling
+            services.AddTransient<ExceptionHandlingMiddleware>();
+        }
+
+        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        {
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "<#= StartupProject #> v1"));
+            }
+
+            //added to handle exceptions
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            app.UseHttpsRedirection();
+
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+        }
+    }
+}
+<# CreateFile(StartupProject, "","Startup.cs"); #>
+////////////////////////////////
+// generated appsettings.json //
+////////////////////////////////
+{
+  //define connection here
+  "ConnectionStrings": {
+    "SqliteDB": "DataSource=app.db;Cache=Shared",
+    "SqlServerDB": "Server=DESKTOP-GBANT4V; Database=BookStoresDB; Trusted_Connection=True;"
+  },
+  //required to control serilog
+  "Serilog": {
+    "MinimumLevel": "Information",
+    "Override": {
+      "Microsoft.AspNetCore": "Warning"
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "Logs\\AppLogs.log",
+          "outputTemplate": "{Timestamp:HH:mm:ss.fff zzz} [{Level}] [{SourceContext}] {Message}{NewLine}{Exception}"
+        }
+      }
+    ],
+    "Filter": [
+      {
+        "Name": "ByExcluding",
+        "Args": {
+          "expression": "StartsWith(SourceContext, 'Microsoft.')"
+        }
+      }
+    ]
+  },
+  "AllowedHosts": "*"
+}
+<# CreateFile(StartupProject, "","appsettings.json"); #><#foreach(string className in classNames)
 {
     var properClassName = GetProperClassName(className);
     var repositoryName =  properClassName + "Repository";
     (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
 #>
-//////////////////////////////////////
-// generated I<#= repositoryName #> //
-//////////////////////////////////////
+/////////////////////////////////////////
+// generated I<#= repositoryName #>.cs //
+/////////////////////////////////////////
 using Domain.Entities;
 
 namespace Domain.Interfaces
@@ -59,9 +513,9 @@ namespace Domain.Interfaces
     var repositoryName =  properClassName + "Repository";
     (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
 #>
-/////////////////////////////////////
-// generated <#= repositoryName #> //
-/////////////////////////////////////
+////////////////////////////////////////
+// generated <#= repositoryName #>.cs //
+////////////////////////////////////////
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
@@ -90,9 +544,9 @@ namespace Infrastructure.Persistence.Repositories
     var serviceName =  properClassName + "Service";
     (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
 #>
-///////////////////////////////////
-// generated I<#= serviceName #> //
-///////////////////////////////////
+//////////////////////////////////////
+// generated I<#= serviceName #>.cs //
+//////////////////////////////////////
 using Domain.Entities;
 using System.Linq.Expressions;
 
@@ -100,12 +554,12 @@ namespace Application.Interfaces
 {
     public interface I<#= properClassName #>Service
     {
-        Task<(bool IsSuccess, string? Message)> Add<#= properClassName #>(<#= properClassName #> entity);
-        Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression);
-        Task<(bool IsSuccess, IEnumerable<<#= properClassName #>> entities, string Message)> GetAll<#= properClassName #>();
-        Task<(bool IsSuccess, <#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> id);
-        Task<(bool IsSuccess, string Message)> Remove<#= properClassName #>(<#= key1Type #> id);
-        Task<(bool IsSuccess, string Message)> Update<#= properClassName #>(<#= properClassName #> entity);
+        Task<string> Add<#= properClassName #>(<#= properClassName #> entity, CancellationToken cancellationToken = default);
+        Task<(IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression, CancellationToken cancellationToken = default);
+        Task<(IEnumerable<<#= properClassName #>> entities, string Message)> GetAll<#= properClassName #>(CancellationToken cancellationToken = default);
+        Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> id, CancellationToken cancellationToken = default);
+        Task<string> Remove<#= properClassName #>(<#= key1Type #> id, CancellationToken cancellationToken = default);
+        Task<string> Update<#= properClassName #>(<#= properClassName #> entity, CancellationToken cancellationToken = default);
     }
 }
 <# CreateFile("Application", "Interfaces", "I"+serviceName+".cs"); #>
@@ -119,9 +573,9 @@ namespace Application.Interfaces
     var repositoryName =  properClassName + "Repository";
     (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
 #>
-//////////////////////////////////
-// generated <#= serviceName #> //
-//////////////////////////////////
+/////////////////////////////////////
+// generated <#= serviceName #>.cs //
+/////////////////////////////////////
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Exceptions;
@@ -139,7 +593,6 @@ namespace Application.Services
             _repositoryManager = repositoryManager;
         }
         public async Task<(IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression, CancellationToken cancellationToken = default)
-        {
         {
             var items = await _repositoryManager.<#= properClassName #>Repository.Find(expression);
             return (items, "<#= properClassName #> records retrieved");
@@ -229,9 +682,9 @@ namespace Application.Services
     var controller =  properClassName + "Controller";
     (var key1,var key1Type) = GetKeyPropertyOfAClass(dte,project1,EntityNamespace+"."+properClassName);
 #>
-////////////////////////////////////////////////////////////
-// generated <#= controller #> where Entity is the class //
-////////////////////////////////////////////////////////////
+////////////////////////////////////
+// generated <#= controller #>.cs //
+////////////////////////////////////
 using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -298,9 +751,9 @@ namespace Infrastructure.Presentation.Controllers
 <#
 }
 #>
-///////////////////////////////
-// generated IServiceManager //
-///////////////////////////////
+//////////////////////////////////
+// generated IServiceManager.cs //
+//////////////////////////////////
 namespace Application.Interfaces
 {
     public interface IServiceManager
@@ -316,9 +769,9 @@ namespace Application.Interfaces
     }
 }
 <# CreateFile("Application", "Interfaces","IServiceManager.cs"); #>
-//////////////////////////////
-// generated ServiceManager //
-//////////////////////////////
+/////////////////////////////////
+// generated ServiceManager.cs //
+/////////////////////////////////
 using Application.Interfaces;
 using Domain.Interfaces;
 
@@ -343,7 +796,7 @@ namespace Application.Services
             _lazy<#= properClassName #>Service = new Lazy<I<#= properClassName #>Service>(() => new <#= properClassName #>Service(repositoryManager));
 <#
 }
-#
+#>
         }
 <#foreach(string className in classNames)
 {
@@ -352,13 +805,13 @@ namespace Application.Services
         public I<#= properClassName #>Service <#= properClassName #>Service => _lazy<#= properClassName #>Service.Value;
 <#
 }
-#
+#>
     }
 }
 <# CreateFile("Application", "Services","ServiceManager.cs"); #>
-///////////////////////////////
-// generated IRepositoryManager //
-///////////////////////////////
+/////////////////////////////////////
+// generated IRepositoryManager.cs //
+/////////////////////////////////////
 namespace Domain.Interfaces
 {
     public interface IRepositoryManager
@@ -375,9 +828,9 @@ namespace Domain.Interfaces
     }
 }
 <# CreateFile("Domain", "Interfaces","IRepositoryManager.cs"); #>
-//////////////////////////////
-// generated RepositoryManager //
-//////////////////////////////
+////////////////////////////////////
+// generated RepositoryManager.cs //
+////////////////////////////////////
 using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
 
@@ -404,7 +857,7 @@ namespace Infrastructure.Persistence.Repositories
             _lazy<#= properClassName #>Repository = new Lazy<I<#= properClassName #>Repository>(() => new <#= properClassName #>Repository(context));
 <#
 }
-#
+#>
             _lazyUnitOfWork = new Lazy<IUnitOfWork>(() => new UnitOfWork(context));
         }
 <#foreach(string className in classNames)
@@ -414,8 +867,8 @@ namespace Infrastructure.Persistence.Repositories
         public I<#= properClassName #>Repository <#= properClassName #>Repository => _lazy<#= properClassName #>Repository.Value;
 <#
 }
-#
+#>
         public IUnitOfWork UnitOfWork => _lazyUnitOfWork.Value;
     }
 }
-<# CreateFile("Infrastructure", "Persistence/Repository","RepositoryManager.cs"); #>
+<# CreateFile("Infrastructure", "Persistence/Repositories","RepositoryManager.cs"); #>

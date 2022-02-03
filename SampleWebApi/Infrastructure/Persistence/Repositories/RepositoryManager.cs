@@ -1,4 +1,7 @@
-﻿using Domain.Interfaces;
+////////////////////////////////////
+// generated RepositoryManager.cs //
+////////////////////////////////////
+using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
 
 namespace Infrastructure.Persistence.Repositories
@@ -7,6 +10,7 @@ namespace Infrastructure.Persistence.Repositories
     {
         private readonly Lazy<ISampleRepository> _lazySampleRepository;
         private readonly Lazy<IUnitOfWork> _lazyUnitOfWork;
+
         public RepositoryManager(ApplicationDbContext context)
         {
             _lazySampleRepository = new Lazy<ISampleRepository>(() => new SampleRepository(context));

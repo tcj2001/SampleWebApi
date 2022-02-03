@@ -1,4 +1,7 @@
-﻿using Domain.Exceptions;
+//////////////////////////////////////////////
+// generated ExceptionHandlingMiddleware.cs //
+//////////////////////////////////////////////
+using Domain.Exceptions;
 using System.Text.Json;
 
 namespace Webapi.Middleware

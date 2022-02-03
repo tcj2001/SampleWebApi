@@ -5,17 +5,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="T4Generate_UOW_RP_SERVICE_CONTROLLER.cs">
+    <Compile Include="T4Generate_UOW_RP_SERVICE_CONTROLLER.txt">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>T4Generate_UOW_RP_SERVICE_CONTROLLER.tt</DependentUpon>
-    </None>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
     <None Update="T4Generate_UOW_RP_SERVICE_CONTROLLER.tt">
-      <LastGenOutput>T4Generate_UOW_RP_SERVICE_CONTROLLER.cs</LastGenOutput>
+      <LastGenOutput>T4Generate_UOW_RP_SERVICE_CONTROLLER.txt</LastGenOutput>
       <Generator>TextTemplatingFileGenerator</Generator>
+    </None>
+    <None Update="T4Generate_UOW_RP_SERVICE_CONTROLLER.txt">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>T4Generate_UOW_RP_SERVICE_CONTROLLER.tt</DependentUpon>
     </None>
     <None Update="T4Helper.ttinclude">
       <LastGenOutput>T4Helper.cs</LastGenOutput>
@@ -28,11 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="T4Generate_UOW_RP_SERVICE_CONTROLLER.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>T4Generate_UOW_RP_SERVICE_CONTROLLER.tt</DependentUpon>
-    </Compile>
     <Compile Update="T4Helper.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

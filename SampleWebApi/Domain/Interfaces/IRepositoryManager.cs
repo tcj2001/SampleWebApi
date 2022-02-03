@@ -1,4 +1,7 @@
-﻿namespace Domain.Interfaces
+/////////////////////////////////////
+// generated IRepositoryManager.cs //
+/////////////////////////////////////
+namespace Domain.Interfaces
 {
     public interface IRepositoryManager
     {

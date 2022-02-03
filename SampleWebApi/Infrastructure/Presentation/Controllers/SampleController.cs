@@ -1,4 +1,7 @@
-﻿using Application.Interfaces;
+////////////////////////////////////
+// generated SampleController.cs //
+////////////////////////////////////
+using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -23,7 +26,6 @@ namespace Infrastructure.Presentation.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            logger.LogInformation("In get all method");
             var result = await _serviceManager.SampleService.GetAllSample();
             return Ok(result.entities);
         }

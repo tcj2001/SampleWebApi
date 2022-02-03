@@ -1,4 +1,7 @@
-﻿using Domain.Entities;
+/////////////////////////////////////////
+// generated ISampleRepository.cs //
+/////////////////////////////////////////
+using Domain.Entities;
 
 namespace Domain.Interfaces
 {

@@ -1,4 +1,7 @@
-﻿namespace Domain.Exceptions
+//////////////////////////////////////
+// generated BadRequestException.cs //
+//////////////////////////////////////
+namespace Domain.Exceptions
 {
     public abstract class BadRequestException : Exception
     {

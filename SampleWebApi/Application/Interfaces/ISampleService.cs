@@ -1,4 +1,7 @@
-﻿using Domain.Entities;
+//////////////////////////////////////
+// generated ISampleService.cs //
+//////////////////////////////////////
+using Domain.Entities;
 using System.Linq.Expressions;
 
 namespace Application.Interfaces

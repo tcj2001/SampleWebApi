@@ -1,3 +1,6 @@
+//////////////////////////
+// generated Startup.cs //
+//////////////////////////
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Webapi.Extensions;

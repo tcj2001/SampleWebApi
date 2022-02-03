@@ -1,4 +1,7 @@
-﻿using Domain.Entities;
+////////////////////////////////////////
+// generated SampleRepository.cs //
+////////////////////////////////////////
+using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Persistence.Context;
 
