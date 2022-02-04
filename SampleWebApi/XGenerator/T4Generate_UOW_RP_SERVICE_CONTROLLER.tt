@@ -562,8 +562,8 @@ namespace Application.Interfaces
         Task<string> Add<#= properClassName #>(<#= properClassName #> entity, CancellationToken cancellationToken = default);
         Task<(IEnumerable<<#= properClassName #>> entities, string Message)> Find<#= properClassName #>(Expression<Func<<#= properClassName #>, bool>> expression, CancellationToken cancellationToken = default);
         Task<(IEnumerable<<#= properClassName #>> entities, string Message)> GetAll<#= properClassName #>(CancellationToken cancellationToken = default);
-        Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> id, CancellationToken cancellationToken = default);
-        Task<string> Remove<#= properClassName #>(<#= key1Type #> id, CancellationToken cancellationToken = default);
+        Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default);
+        Task<string> Remove<#= properClassName #>(<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default);
         Task<string> Update<#= properClassName #>(<#= properClassName #> entity, CancellationToken cancellationToken = default);
     }
 }
@@ -593,7 +593,7 @@ namespace Application.Services
     {
         private readonly IRepositoryManager _repositoryManager;
 
-        public SampleService(IRepositoryManager repositoryManager)
+        public <#= properClassName #>Service(IRepositoryManager repositoryManager)
         {
             _repositoryManager = repositoryManager;
         }
@@ -609,12 +609,12 @@ namespace Application.Services
             return (items, "<#= properClassName #> records retrieved");
         }
 
-        public async Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(int id, CancellationToken cancellationToken = default)
+        public async Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
         {
-            var item = await _repositoryManager.<#= properClassName #>Repository.GetById(id);
+            var item = await _repositoryManager.<#= properClassName #>Repository.GetById(<#= key1 #>);
             if (item == null)
             {
-                throw new EntityKeyNotFoundException("<#= properClassName #>", id.ToString());
+                throw new EntityKeyNotFoundException("<#= properClassName #>", <#= key1 #>.ToString());
             }
             return (item, "<#= properClassName #> record retrieved");
         }
@@ -623,10 +623,10 @@ namespace Application.Services
         {
             if (entity != null)
             {
-                var item = await _repositoryManager.<#= properClassName #>Repository.GetById(entity.Id);
+                var item = await _repositoryManager.<#= properClassName #>Repository.GetById(entity.<#= key1 #>);
                 if (item != null)
                 {
-                    throw new EntityKeyFoundException("<#= properClassName #>", entity.Id.ToString());
+                    throw new EntityKeyFoundException("<#= properClassName #>", entity.<#= key1 #>.ToString());
                 }
                 else
                 {
@@ -638,12 +638,12 @@ namespace Application.Services
             throw new Exception("Add Error");
         }
 
-        public async Task<string> Remove<#= properClassName #>(int id, CancellationToken cancellationToken = default)
+        public async Task<string> Remove<#= properClassName #><#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
         {
-            var item = await _repositoryManager.<#= properClassName #>Repository.GetById(id);
+            var item = await _repositoryManager.<#= properClassName #>Repository.GetById(<#= key1 #>);
             if (item == null)
             {
-                throw new EntityKeyNotFoundException("<#= properClassName #>", id.ToString());
+                throw new EntityKeyNotFoundException("<#= properClassName #>", <#= key1 #>.ToString());
             }
             else
             {
@@ -657,10 +657,10 @@ namespace Application.Services
         {
             if (entity != null)
             {
-                var item = await _repositoryManager.<#= properClassName #>Repository.GetById(entity.Id);
+                var item = await _repositoryManager.<#= properClassName #>Repository.GetById(entity.<#= key1 #>);
                 if (item == null)
                 {
-                    throw new EntityKeyNotFoundException("<#= properClassName #>", entity.Id.ToString());
+                    throw new EntityKeyNotFoundException("<#= properClassName #>", entity.<#= key1 #>.ToString());
                 }
                 else
                 {
