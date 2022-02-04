@@ -10,18 +10,19 @@ dotnet new solution
 dotnet new worker -n Startup
 
 //to create class library
-dotnet new classlib -o Core
+dotnet new classlib -o Domain
 dotnet new classlib -o Application
 dotnet new classlib -o Infrastructure
 dotnet new classlib -o Web
 
 //add solution file
-dotnet sln add Webapi/Webapi.csproj Core/Core.csproj Application/Application.csproj  Infrastructure/Infrastructure.csproj
+dotnet sln add Webapi/Webapi.csproj Domain/Domain.csproj Application/Application.csproj  Infrastructure/Infrastructure.csproj
 
 //add project dependency
-dotnet add Application/Application.csproj reference Core/Core.csproj
+dotnet add Application/Application.csproj reference Domain/Domain.csproj
 dotnet add Infrastructute/Infrastructute.csproj reference Application/Application.csproj
 dotnet add Webapi/Webapi.csproj reference Infrastructute/Infrastructute.csproj reference Application/Application.csproj
+
 //add package dependencies
 dotnet add Application/.Application.csproj package microsoft.extensions.dependencyinjection.abstractions
 dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore
@@ -30,9 +31,6 @@ dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframewor
 dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.sqlserver
 dotnet add Infrastructute/Infrastructute.csproj package microsoft.entityframeworkcore.tools
 dotnet add Infrastructute/Infrastructute.csproj package microsoft.extensions.dependencyinjection
-
-dotnet add Startup/Startup.csproj package microsoft.entityframeworkcore.design
-dotnet add Startup/Startup.csproj package swashbuckle.aspnetcore
 
 //Add a connection string in appsettings.json
   "ConnectionStrings":{
@@ -47,7 +45,7 @@ services.AddDbContext<ApplicationDbContext>(options=>options.UseSqlServer("Name=
 
 //migration for database first approach
 //run from solution folder
-scaffold-DbContext -Connection Name=SqlServerDB -Provider Microsoft.EntityFrameworkCore.SqlServer -OutputDir ..\Core\Entities  -Context ApplicationDbContext -ContextDir ..\Infrastructure\Context -DataAnnotations -Force
+scaffold-DbContext -Connection Name=SqlServerDB -Provider Microsoft.EntityFrameworkCore.SqlServer -OutputDir ..\Domain\Entities  -Context ApplicationDbContext -ContextDir ..\Infrastructure\Persistence\Context -Namespace Domain.Entities -ContextNamespace Infrastructure.Persistence.Context  -DataAnnotations -Force
 
 //migration for code first approach
 //run from solution folder

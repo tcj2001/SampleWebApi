@@ -609,7 +609,7 @@ namespace Application.Services
             return (items, "<#= properClassName #> records retrieved");
         }
 
-        public async Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
+        public async Task<(<#= properClassName #>? entity, string Message)> Get<#= properClassName #>ById(<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
         {
             var item = await _repositoryManager.<#= properClassName #>Repository.GetById(<#= key1 #>);
             if (item == null)
@@ -638,7 +638,7 @@ namespace Application.Services
             throw new Exception("Add Error");
         }
 
-        public async Task<string> Remove<#= properClassName #><#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
+        public async Task<string> Remove<#= properClassName #>(<#= key1Type #> <#= key1 #>, CancellationToken cancellationToken = default)
         {
             var item = await _repositoryManager.<#= properClassName #>Repository.GetById(<#= key1 #>);
             if (item == null)
@@ -773,7 +773,7 @@ namespace Application.Interfaces
 #>
     }
 }
-<# CreateFile("Application", "Interfaces","IServiceManager.cs"); #>
+<# OverwriteFile("Application", "Interfaces","IServiceManager.cs"); #>
 /////////////////////////////////
 // generated ServiceManager.cs //
 /////////////////////////////////
@@ -813,7 +813,7 @@ namespace Application.Services
 #>
     }
 }
-<# CreateFile("Application", "Services","ServiceManager.cs"); #>
+<# OverwriteFile("Application", "Services","ServiceManager.cs"); #>
 /////////////////////////////////////
 // generated IRepositoryManager.cs //
 /////////////////////////////////////
@@ -832,7 +832,7 @@ namespace Domain.Interfaces
         IUnitOfWork UnitOfWork { get; }
     }
 }
-<# CreateFile("Domain", "Interfaces","IRepositoryManager.cs"); #>
+<# OverwriteFile("Domain", "Interfaces","IRepositoryManager.cs"); #>
 ////////////////////////////////////
 // generated RepositoryManager.cs //
 ////////////////////////////////////
@@ -876,4 +876,4 @@ namespace Infrastructure.Persistence.Repositories
         public IUnitOfWork UnitOfWork => _lazyUnitOfWork.Value;
     }
 }
-<# CreateFile("Infrastructure", "Persistence/Repositories","RepositoryManager.cs"); #>
+<# OverwriteFile("Infrastructure", "Persistence/Repositories","RepositoryManager.cs"); #>

@@ -8,7 +8,7 @@
 <#@ import namespace="System.Linq" #>
 <#+
     //Generating Seperate Files
-    public void ProcessContent(string project, string folder, string outputFileName, string content)
+    public void ProcessContent(bool flag, string project, string folder, string outputFileName, string content)
     {
         string projectDirectory = GetProjectDirectory(project);
         string outputFilePath = Path.Combine(projectDirectory+"\\"+folder, outputFileName);
@@ -19,7 +19,22 @@
             Directory.CreateDirectory(outputDirectoryPath);
         }
 
-        if(!File.Exists(outputFilePath)){
+        if(flag==false){
+            if(!File.Exists(outputFilePath)){
+                File.WriteAllText(outputFilePath, content);
+                IServiceProvider hostServiceProvider = (IServiceProvider)Host;
+                EnvDTE.DTE dte = (EnvDTE.DTE)hostServiceProvider.GetService(typeof(EnvDTE.DTE));
+                var project1 = FindProjectByName(dte, project);
+                ProjectItem containingProjectItem = dte.Solution.FindProjectItem(outputFileName);
+                if (containingProjectItem != null){
+                    ProjectItem item = project1.ProjectItems.Item(folder);
+                    if(item !=null)
+                        item.ProjectItems.AddFromFileCopy(outputFilePath);
+                }
+            }
+        }
+        else
+        {
             File.WriteAllText(outputFilePath, content);
             IServiceProvider hostServiceProvider = (IServiceProvider)Host;
             EnvDTE.DTE dte = (EnvDTE.DTE)hostServiceProvider.GetService(typeof(EnvDTE.DTE));
@@ -35,10 +50,16 @@
 
     public void CreateFile(string project, string folder, string fileName)
     {
-        ProcessContent(project, folder, fileName, this.GenerationEnvironment.ToString());
+        ProcessContent(false, project, folder, fileName, this.GenerationEnvironment.ToString());
         this.GenerationEnvironment.Remove(0, this.GenerationEnvironment.Length);
     }
-
+    
+    public void OverwriteFile(string project, string folder, string fileName)
+    {
+        ProcessContent(true, project, folder, fileName, this.GenerationEnvironment.ToString());
+        this.GenerationEnvironment.Remove(0, this.GenerationEnvironment.Length);
+    }
+    
     public string GetSolutionDirectory()
     {
         var serviceProvider = this.Host as IServiceProvider;
