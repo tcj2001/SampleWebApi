@@ -32,40 +32,6 @@
         efContext = classWithDbContext.Name;
     }
 #>
-/////////////////////////
-// generated Sample.cs //
-/////////////////////////
-using System.ComponentModel.DataAnnotations;
-
-namespace Domain.Entities
-{
-    public class Sample
-    {
-        [Key]
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public string? Description { get; set; }
-    }
-}
-<# CreateFile("Domain", "Entities","Sample.cs"); #>
-///////////////////////////////////////
-// generated ApplicationDbContext.cs //
-///////////////////////////////////////
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-
-namespace Infrastructure.Persistence.Context
-{
-    public class ApplicationDbContext : DbContext
-    {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
-        {
-
-        }
-        public DbSet<Sample> Samples { get; set; }
-    }
-}
-<# CreateFile("Infrastructure", "Persistence/Context","ApplicationDbContext.cs"); #>
 /////////////////////////////////////
 // generated IGenericRepository.cs //
 /////////////////////////////////////
@@ -306,7 +272,7 @@ namespace <#= StartupProject #>.Extensions
 using Domain.Exceptions;
 using System.Text.Json;
 
-namespace <#= StartupProject #>.Middleware
+namespace <#= StartupProject #>.Middlewares
 {
     internal sealed class ExceptionHandlingMiddleware : IMiddleware
     {
@@ -348,7 +314,7 @@ namespace <#= StartupProject #>.Middleware
         }
     }
 }
-<# CreateFile(StartupProject, "Middleware","ExceptionHandlingMiddleware.cs"); #>
+<# CreateFile(StartupProject, "Middlewares","ExceptionHandlingMiddleware.cs"); #>
 //////////////////////////
 // generated Program.cs //
 //////////////////////////
@@ -384,7 +350,7 @@ namespace <#= StartupProject #>
 using Microsoft.OpenApi.Models;
 using Serilog;
 using <#= StartupProject #>.Extensions;
-using <#= StartupProject #>.Middleware;
+using <#= StartupProject #>.Middlewares;
 
 namespace <#= StartupProject #>
 {

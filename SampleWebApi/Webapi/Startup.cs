@@ -4,7 +4,7 @@
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Webapi.Extensions;
-using Webapi.Middleware;
+using Webapi.Middlewares;
 
 namespace Webapi
 {
