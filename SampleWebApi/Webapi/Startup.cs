@@ -32,6 +32,8 @@ namespace Webapi
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Webapi", Version = "v1" });
+
+                //the following is only needed for swagger to enable basic authenication
                 c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
@@ -54,13 +56,16 @@ namespace Webapi
                         new string[] {}
                     }
                 });
+
             });
 
             // added these for this project
             services.AddInfrastructure();
             services.AddApplication();
+
             //this is need for basic authentication
             services.Configure<BasicAuthentication>(Configuration.GetSection("BasicAuthentication"));
+
             //this is need for exception handling
             services.AddTransient<ExceptionHandlingMiddleware>();
         }
@@ -76,12 +81,12 @@ namespace Webapi
                 {
                     string swaggerJsonBasePath = string.IsNullOrWhiteSpace(c.RoutePrefix) ? "." : "..";
                     c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "Webapi v1");
-                    //the following is needed for swagger to enable basic authenication
                 });
             }
 
             //added to handle basic authentication     
             app.UseBasicAuthMiddleware();
+
             //added to handle exceptions
             app.UseMiddleware<ExceptionHandlingMiddleware>();
 
