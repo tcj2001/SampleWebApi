@@ -52,6 +52,7 @@ namespace Webapi
                 {
                     string swaggerJsonBasePath = string.IsNullOrWhiteSpace(c.RoutePrefix) ? "." : "..";
                     c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "Webapi v1");
+                    //the following is needed for swagger to enable basic authenication
                     c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
                        {
                             Name = "Authorization",
