@@ -266,6 +266,22 @@ namespace <#= StartupProject #>.Extensions
     }
 }
 <# CreateFile(StartupProject, "Extensions","AddPersistenceExtension.cs"); #>
+//////////////////////////////////////////
+// generated AddBasicAuthExtension.cs //
+//////////////////////////////////////////
+using Webapi.Middlewares;
+
+namespace Webapi.Extensions
+{
+    public static class AddBasicAuthExtension
+    {
+        public static IApplicationBuilder UseBasicAuthMiddleware(this IApplicationBuilder builder)
+        {
+            return builder.UseMiddleware<BasicAuthMiddleware>();
+        }
+    }
+}
+<# CreateFile(StartupProject, "Extensions","AddBasicAuthExtension.cs"); #>
 //////////////////////////////////////////////
 // generated ExceptionHandlingMiddleware.cs //
 //////////////////////////////////////////////
@@ -315,6 +331,67 @@ namespace <#= StartupProject #>.Middlewares
     }
 }
 <# CreateFile(StartupProject, "Middlewares","ExceptionHandlingMiddleware.cs"); #>
+//////////////////////////////////////////////
+// generated BasicAuthMiddleware.cs //
+//////////////////////////////////////////////
+using Microsoft.Extensions.Options;
+using System.Text;
+using Webapi.AppSetting;
+
+namespace Webapi.Middlewares
+{
+    public class BasicAuthMiddleware
+    {
+        private readonly RequestDelegate _next;
+        private readonly BasicAuthentication _basicAuthentication;
+        public BasicAuthMiddleware(RequestDelegate next, IOptions<BasicAuthentication> basicAuthentication)
+        {
+            _next = next;
+            _basicAuthentication = basicAuthentication.Value;
+        }
+
+        public async Task Invoke(HttpContext httpContext)
+        {
+            string authHeader = httpContext.Request.Headers["Authorization"];
+            if (authHeader != null)
+            {
+                string auth = authHeader.Split(new char[] { ' ' })[1];
+                Encoding encoding = Encoding.GetEncoding("UTF-8");
+                var usernameAndPassword = encoding.GetString(Convert.FromBase64String(auth));
+                string username = usernameAndPassword.Split(new char[] { ':' })[0];
+                string password = usernameAndPassword.Split(new char[] { ':' })[1];
+                if (_basicAuthentication.User == username && _basicAuthentication.Password == password)
+                {
+                    await _next(httpContext);
+                }
+                else
+                {
+                    httpContext.Response.StatusCode = 401;
+                    return;
+                }
+            }
+            else
+            {
+                httpContext.Response.StatusCode = 401;
+                return;
+            }
+        }
+
+    }
+}
+<# CreateFile(StartupProject, "Middlewares","BasicAuthMiddleware.cs"); #>
+//////////////////////////////////////
+// generated BasicAuthentication.cs //
+//////////////////////////////////////
+namespace Webapi.AppSetting
+{
+    public class BasicAuthentication
+    {
+        public string User { get; set; }
+        public string Password { get; set; }
+    }
+}
+<# CreateFile(StartupProject, "AppSetting","BasicAuthentication.cs"); #>
 //////////////////////////
 // generated Program.cs //
 //////////////////////////
@@ -349,6 +426,7 @@ namespace <#= StartupProject #>
 //////////////////////////
 using Microsoft.OpenApi.Models;
 using Serilog;
+using <#= StartupProject #>.AppSetting;
 using <#= StartupProject #>.Extensions;
 using <#= StartupProject #>.Middlewares;
 
@@ -378,11 +456,40 @@ namespace <#= StartupProject #>
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "<#= StartupProject #>", Version = "v1" });
+
+                //the following is only needed for swagger to enable basic authenication
+                c.AddSecurityDefinition("basic", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "basic",
+                    In = ParameterLocation.Header,
+                    Description = "Basic Authorization header using the Bearer scheme."
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "basic"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+            
             });
 
             // added these for this project
             services.AddInfrastructure();
             services.AddApplication();
+
+            //this is need for basic authentication
+            services.Configure<BasicAuthentication>(Configuration.GetSection("BasicAuthentication"));
+
             //this is need for exception handling
             services.AddTransient<ExceptionHandlingMiddleware>();
         }
@@ -400,6 +507,9 @@ namespace <#= StartupProject #>
                     c.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "<#= StartupProject #> v1");
                 });
             }
+
+            //added to handle basic authentication     
+            app.UseBasicAuthMiddleware();
 
             //added to handle exceptions
             app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -427,6 +537,13 @@ namespace <#= StartupProject #>
     "SqliteDB": "DataSource=app.db;Cache=Shared",
     "SqlServerDB": "Server=DESKTOP-GBANT4V; Database=BookStoresDB; Trusted_Connection=True;"
   },
+  
+  //required for basic authentication
+  "BasicAuthentication": {
+    "User": "SOMEuser",
+    "Password":"SOMEpassword"
+  },
+  
   //required to control serilog
   "Serilog": {
     "MinimumLevel": "Information",

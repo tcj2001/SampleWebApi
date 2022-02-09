@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System.Text;
+using Webapi.AppSetting;
 
 namespace Webapi.Middlewares
 {
@@ -41,19 +42,4 @@ namespace Webapi.Middlewares
         }
 
     }
-
-    public static class BasicAuthMiddlewareExtensions
-    {
-        public static IApplicationBuilder UseBasicAuthMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseMiddleware<BasicAuthMiddleware>();
-        }
-    }
-
-    public class BasicAuthentication
-    {
-        public string User { get; set; }
-        public string Password { get; set; }
-    }
-
 }

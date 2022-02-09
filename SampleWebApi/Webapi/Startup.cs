@@ -3,6 +3,7 @@
 //////////////////////////
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Webapi.AppSetting;
 using Webapi.Extensions;
 using Webapi.Middlewares;
 
